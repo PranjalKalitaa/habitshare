@@ -1,7 +1,7 @@
 // sw.js — HabitShare Service Worker
 // Provides offline support and PWA installability
 
-const CACHE_NAME = 'habitshare-v3';
+const CACHE_NAME = 'habitshare-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
