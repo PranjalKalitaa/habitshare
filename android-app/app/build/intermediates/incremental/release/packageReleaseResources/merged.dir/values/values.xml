@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="enableNotification">true</bool>
+    <bool name="enableSiteSettingsShortcut">true</bool>
+    <color name="backgroundColor">#15132B</color>
+    <color name="colorPrimary">#15132B</color>
+    <color name="colorPrimaryDark">#15132B</color>
+    <color name="navigationColor">#15132B</color>
+    <color name="navigationColorDark">#15132B</color>
+    <color name="navigationDividerColor">#15132B</color>
+    <color name="navigationDividerColorDark">#15132B</color>
+    <color name="shortcut_background">#F5F5F5</color>
+    <integer name="splashScreenFadeOutDuration">1000</integer>
+    <string name="appName" translatable="false">HabitShare</string>
+    <string name="assetStatements">
+    [{
+        \"relation\": [\"delegate_permission/common.handle_all_urls\"],
+        \"target\": {
+            \"namespace\": \"web\",
+            \"site\": \"https://habit-share-app.web.app\"
+        }
+    }]
+    
+  </string>
+    <string name="fallbackType" translatable="false">customtabs</string>
+    <string name="generatorApp" translatable="false">bubblewrap-cli</string>
+    <string name="hostName" translatable="false">habit-share-app.web.app</string>
+    <string name="launchUrl" translatable="false">https://habit-share-app.web.app/</string>
+    <string name="launcherName" translatable="false">HabitShare</string>
+    <string name="orientation" translatable="false">portrait</string>
+    <string name="providerAuthority" translatable="false">com.habitshare.app.fileprovider</string>
+    <string name="webManifestUrl" translatable="false">http://localhost:3000/manifest.json</string>
+</resources>

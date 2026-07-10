@@ -1,0 +1,42 @@
+{
+  "packageId": "com.habitshare.app",
+  "host": "habit-share-app.web.app",
+  "name": "HabitShare",
+  "launcherName": "HabitShare",
+  "display": "standalone",
+  "themeColor": "#15132B",
+  "themeColorDark": "#15132B",
+  "navigationColor": "#15132B",
+  "navigationColorDark": "#15132B",
+  "navigationDividerColor": "#15132B",
+  "navigationDividerColorDark": "#15132B",
+  "backgroundColor": "#15132B",
+  "enableNotifications": true,
+  "startUrl": "/",
+  "iconUrl": "http://localhost:3000/icons/logo-512.png",
+  "splashScreenFadeOutDuration": 1000,
+  "signingKey": {
+    "path": "habitshare.keystore",
+    "alias": "habitshare"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 2,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "http://localhost:3000/manifest.json",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "minSdkVersion": 21,
+  "orientation": "portrait",
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "displayOverride": [],
+  "appVersion": "1.0.0"
+}

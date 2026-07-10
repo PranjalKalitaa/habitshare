@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.habitshare.app",
+      "sha256_cert_fingerprints": [
+        "49:DB:DA:E5:ED:78:EF:5B:98:9F:45:18:59:41:5A:8C:B3:7B:E3:42:2E:47:AE:98:F9:B9:01:46:95:9F:5D:2B"
+      ]
+    }
+  }
+]
