@@ -713,24 +713,88 @@
     showToast('Name saved! ✅');
   });
 
-  // ── Stripe Checkout ───────────────────────────────────────────
+  // ── Razorpay Checkout ──────────────────────────────────────────
   async function redirectToCheckout(priceType){
     const user = window.fbAuth.currentUser;
     if(!user){ showToast('Please sign in first'); return; }
-    const priceId = priceType==='yearly' ? STRIPE_PRICE_YEARLY : STRIPE_PRICE_MONTHLY;
-    showToast('Opening payment page… ⏳');
+    showToast('Opening payment window… ⏳');
     try{
-      const res = await fetch(`${SERVER_URL}/checkout/session`,{
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ priceId, priceType, uid:user.uid, email:user.email }),
+      // 1. Create order on the backend
+      const res = await fetch(`${SERVER_URL}/checkout/razorpay-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ priceType, uid: user.uid, email: user.email || '' }),
       });
       if(!res.ok) throw new Error((await res.json().catch(()=>({}))).error || `Server ${res.status}`);
-      const { url } = await res.json();
-      if(url) window.location.href = url;
-      else showToast('Payment setup failed — try again');
-    }catch(err){
-      console.error('[HabitShare] Checkout error:', err);
-      showToast(err.message.includes('fetch')||err.message.includes('Failed')
+      
+      const orderData = await res.json();
+      
+      // 2. Open Razorpay Standard Checkout overlay modal
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "HabitShare",
+        description: `Upgrade to Premium (${priceType === 'yearly' ? 'Yearly' : 'Monthly'})`,
+        image: "icons/logo-192.png",
+        order_id: orderData.orderId,
+        handler: async function (response) {
+          showToast('Verifying payment... ⏳');
+          try {
+            // 3. Send successful payment details to backend verification endpoint
+            const verifyRes = await fetch(`${SERVER_URL}/checkout/razorpay-verify`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                uid: orderData.uid,
+                priceType: orderData.priceType
+              })
+            });
+            if (!verifyRes.ok) throw new Error((await verifyRes.json().catch(()=>({}))).error || `Server ${verifyRes.status}`);
+            
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              showToast('Premium Activated! 🎉 Welcome onboard!');
+              await loadState();
+              renderDashboard();
+              closeOverlay('overlay-profile');
+            } else {
+              showToast('Payment verification failed');
+            }
+          } catch (verifyErr) {
+            console.error('[HabitShare] Verification error:', verifyErr);
+            showToast('Verification failed: ' + verifyErr.message);
+          }
+        },
+        prefill: {
+          email: user.email || ''
+        },
+        theme: {
+          color: "#8B5CF6" // Indigo branding color
+        },
+        modal: {
+          ondismiss: function () {
+            showToast('Payment cancelled');
+          }
+        }
+      };
+
+      const rzp = new Razorpay(options);
+      
+      // Handle payment failure event
+      rzp.on('payment.failed', function (resp) {
+        console.error('[HabitShare] Payment failed event:', resp.error);
+        showToast('Payment failed: ' + resp.error.description);
+      });
+
+      rzp.open();
+
+    } catch (err) {
+      console.error('[HabitShare] Razorpay checkout error:', err);
+      showToast(err.message.includes('fetch') || err.message.includes('Failed')
         ? '⚠️ Payment server not running. Run: node server/index.js'
         : 'Payment error: ' + err.message);
     }

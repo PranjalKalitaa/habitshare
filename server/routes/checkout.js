@@ -1,79 +1,100 @@
 // ============================================================
 //  server/routes/checkout.js
-//  POST /checkout/session
-//
-//  Creates a Stripe Checkout session and returns the hosted
-//  payment URL. The frontend redirects the user there.
-//
-//  Request body:
-//    { priceId, priceType, uid, email }
-//
-//  Response:
-//    { url }  — Stripe hosted checkout page URL
+//  Razorpay Payment Integration Router
 // ============================================================
 
 const express = require('express');
 const router  = express.Router();
-const Stripe  = require('stripe');
+const Razorpay = require('razorpay');
+const crypto   = require('crypto');
+const admin    = require('../firebase-admin');
 
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+// Initialize Razorpay SDK with environment credentials
+const razorpay = new Razorpay({
+  key_id:     process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
-// POST /checkout/session
-router.post('/session', async (req, res) => {
-  const { priceId, priceType, uid, email } = req.body;
+// POST /checkout/razorpay-order
+// Creates a Razorpay Order and returns it to the client
+router.post('/razorpay-order', async (req, res) => {
+  const { priceType, uid, email } = req.body;
 
-  // Basic validation
-  if (!priceId || !uid) {
-    return res.status(400).json({ error: 'Missing required fields: priceId, uid' });
+  if (!uid) {
+    return res.status(400).json({ error: 'Missing required field: uid' });
   }
-  if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.startsWith('sk_test_PASTE')) {
-    return res.status(500).json({ error: 'Stripe secret key not configured in .env' });
+
+  // Determine amount in paise (minimum 100 paise)
+  // Monthly = ₹89 (8900 paise)
+  // Yearly = ₹1,001 (100100 paise)
+  const amount = priceType === 'yearly' ? 100100 : 8900;
+
+  try {
+    const options = {
+      amount:      amount,
+      currency:    'INR',
+      receipt:     `rcpt_${uid.substring(0, 10)}_${Date.now()}`,
+      notes: {
+        uid:       uid,
+        priceType: priceType || 'monthly',
+        email:     email || ''
+      }
+    };
+
+    const order = await razorpay.orders.create(options);
+    console.log(`[HabitShare] ✅ Razorpay Order created: ${order.id} for uid=${uid}`);
+
+    res.json({
+      orderId:   order.id,
+      amount:    order.amount,
+      currency:  order.currency,
+      keyId:     process.env.RAZORPAY_KEY_ID,
+      uid:       uid,
+      priceType: priceType || 'monthly'
+    });
+
+  } catch (err) {
+    console.error('[HabitShare] ❌ Razorpay Order creation failed:', err.message);
+    res.status(500).json({ error: err.message || 'Razorpay order creation failed' });
+  }
+});
+
+// POST /checkout/razorpay-verify
+// Verifies signature returned from Checkout Standard Web flow and marks user as Premium
+router.post('/razorpay-verify', async (req, res) => {
+  const { razorpay_payment_id, razorpay_order_id, razorpay_signature, uid, priceType } = req.body;
+
+  if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature || !uid) {
+    return res.status(400).json({ error: 'Missing required payment verification fields' });
   }
 
   try {
-    // Dynamically detect frontend URL from Referer header, falling back to FRONTEND_URL
-    let frontendUrl = process.env.FRONTEND_URL || 'https://habit-share-app.web.app';
-    if (req.headers.referer) {
-      try {
-        const parsedUrl = new URL(req.headers.referer);
-        frontendUrl = parsedUrl.origin;
-      } catch (e) {
-        // Fallback if parsing fails
-      }
+    // Generate signature signature verification check
+    const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
+    hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
+    const generatedSignature = hmac.digest('hex');
+
+    if (generatedSignature !== razorpay_signature) {
+      console.error('[HabitShare] ❌ Razorpay signature mismatch!');
+      return res.status(400).json({ error: 'Payment signature verification failed' });
     }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: 'subscription',           // recurring billing
-      payment_method_types: ['card'],
+    // Signature match successful! Update user's Premium status in Firebase Firestore
+    const db = admin.firestore();
+    await db.collection('users').doc(uid).set({
+      isPremium:         true,
+      premiumType:       priceType || 'monthly',
+      premiumSince:      new Date().toISOString(),
+      razorpayPaymentId: razorpay_payment_id,
+      razorpayOrderId:   razorpay_order_id
+    }, { merge: true });
 
-      // Pre-fill email if we have it
-      customer_email: email || undefined,
-
-      line_items: [{ price: priceId, quantity: 1 }],
-
-      // Store Firebase UID + plan type in metadata so the webhook
-      // knows which Firestore user to mark as Premium
-      metadata: {
-        uid,
-        priceType: priceType || 'monthly',
-      },
-
-      // Subscription metadata (also attached to subscription object)
-      subscription_data: {
-        metadata: { uid, priceType: priceType || 'monthly' },
-      },
-
-      // Where Stripe redirects after checkout
-      success_url: `${frontendUrl}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${frontendUrl}?payment=cancel`,
-    });
-
-    console.log(`[HabitShare] ✅ Checkout session created for uid=${uid} plan=${priceType}`);
-    res.json({ url: session.url });
+    console.log(`[HabitShare] ✅ User ${uid} upgraded to Premium via Razorpay Order ${razorpay_order_id}`);
+    res.json({ success: true });
 
   } catch (err) {
-    console.error('[HabitShare] ❌ Stripe session creation failed:', err.message);
-    res.status(500).json({ error: err.message });
+    console.error('[HabitShare] ❌ Payment verification Firestore update failed:', err.message);
+    res.status(500).json({ error: 'Failed to update premium credentials' });
   }
 });
 

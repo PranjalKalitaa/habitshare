@@ -16,25 +16,15 @@ const express = require('express');
 const cors    = require('cors');
 
 const checkoutRouter = require('./routes/checkout');
-const webhookRouter  = require('./routes/webhook');
 
 const app  = express();
 const PORT = process.env.PORT || 4000;
 
 // ── CORS: allow all origins ──────────────────────────────────
 // Security is enforced by Firebase Auth tokens (on checkout)
-// and Stripe webhook signatures — not by origin headers.
-// This allows localtunnel, Firebase Hosting, and any future domains.
+// and cryptographic signatures — not by origin headers.
 app.use(cors({ origin: true, credentials: true }));
 
-// ── IMPORTANT: Webhook route MUST receive the raw body ────────
-// Stripe uses the raw bytes to verify the signature.
-// This route must be mounted BEFORE express.json() middleware.
-app.use(
-  '/webhook',
-  express.raw({ type: 'application/json' }),
-  webhookRouter
-);
 app.use(express.json());
 
 // ── Routes ───────────────────────────────────────────────────
@@ -62,7 +52,7 @@ app.listen(PORT, () => {
   console.log(`  → http://localhost:${PORT}`);
   console.log(`  → Health: http://localhost:${PORT}/health`);
   console.log('');
-  console.log('  To test Stripe webhooks locally:');
-  console.log('  stripe listen --forward-to localhost:' + PORT + '/webhook');
+  console.log('  Testing Razorpay Checkout standard web flow');
+  console.log('  Mode: Test (rzp_test_...)');
   console.log('');
 });
