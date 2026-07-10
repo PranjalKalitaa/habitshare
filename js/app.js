@@ -17,7 +17,10 @@
     {days:100, label:"100 Days", emo:"💎"},
   ];
   const STORAGE_KEY          = "habitshare:v1:state";
-  const SERVER_URL           = 'http://localhost:4000';
+  // Auto-detect backend: on mobile/external use Render, on localhost use local server
+  const SERVER_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? 'http://localhost:4000'
+    : 'https://habitshare-backend.onrender.com';
   const MAX_FREE_HABITS      = 1;
   const MAX_PREMIUM_HABITS   = 3;
   const STRIPE_PRICE_MONTHLY = 'price_1TrOBCRqYLhcUmqlfXi5O2RA';
@@ -710,29 +713,61 @@
     }
   }
 
+  // ── Custom confirm modal (replaces window.confirm to avoid ugly domain popups on mobile) ──
+  function showConfirm(message, onOk) {
+    // Reuse or create the modal
+    let modal = document.getElementById('custom-confirm-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'custom-confirm-modal';
+      modal.style.cssText = [
+        'position:fixed','inset:0','z-index:9999',
+        'background:rgba(0,0,0,0.55)','display:flex',
+        'align-items:center','justify-content:center','padding:24px'
+      ].join(';');
+      modal.innerHTML = `
+        <div style="background:var(--surface,#fff);border-radius:18px;padding:24px 20px;max-width:320px;width:100%;box-shadow:0 20px 60px -10px rgba(0,0,0,0.4);">
+          <p id="ccm-msg" style="font-size:15px;font-weight:600;color:var(--ink,#15132B);margin:0 0 20px;line-height:1.5;text-align:center;"></p>
+          <div style="display:flex;gap:10px;">
+            <button id="ccm-cancel" style="flex:1;padding:13px;border-radius:12px;border:1.5px solid #ECEAF6;background:transparent;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;color:var(--ink-soft,#6B6B8D);">Cancel</button>
+            <button id="ccm-ok" style="flex:1;padding:13px;border-radius:12px;border:none;background:var(--error,#EF4444);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Confirm</button>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    }
+    document.getElementById('ccm-msg').textContent = message;
+    modal.style.display = 'flex';
+    const hide = () => { modal.style.display = 'none'; };
+    document.getElementById('ccm-ok').onclick    = () => { hide(); onOk(); };
+    document.getElementById('ccm-cancel').onclick = () => { hide(); };
+    modal.onclick = (e) => { if (e.target === modal) hide(); };
+  }
+
   // ── Reset ─────────────────────────────────────────────────────
-  $('btn-reset').addEventListener('click', async () => {
-    if(!confirm("Reset your habit and streak history? This can't be undone.")) return;
-    state = defaultState();
-    await saveState();
-    closeOverlay('overlay-profile');
-    $('screen-dashboard').classList.add('hidden');
-    $('btn-profile').classList.add('hidden');
-    $('screen-onboarding').classList.remove('hidden');
-    selectedOption = null;
-    $('btn-start').disabled = true;
-    $('custom-habit').value = '';
-    renderHabitGrid();
-    document.body.classList.remove('premium');
-    if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+  $('btn-reset').addEventListener('click', () => {
+    showConfirm("Reset your habit and streak history? This can't be undone.", async () => {
+      state = defaultState();
+      await saveState();
+      closeOverlay('overlay-profile');
+      $('screen-dashboard').classList.add('hidden');
+      $('btn-profile').classList.add('hidden');
+      $('screen-onboarding').classList.remove('hidden');
+      selectedOption = null;
+      $('btn-start').disabled = true;
+      $('custom-habit').value = '';
+      renderHabitGrid();
+      document.body.classList.remove('premium');
+      if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+    });
   });
 
   // ── Sign out ──────────────────────────────────────────────────
-  $('btn-signout').addEventListener('click', async () => {
-    if(!confirm('Sign out of HabitShare?')) return;
-    closeOverlay('overlay-profile');
-    if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
-    await window.fbAuth.signOut();
+  $('btn-signout').addEventListener('click', () => {
+    showConfirm('Sign out of HabitShare?', async () => {
+      closeOverlay('overlay-profile');
+      if(timerInterval){ clearInterval(timerInterval); timerInterval = null; }
+      await window.fbAuth.signOut();
+    });
   });
 
   // ── Payment return ────────────────────────────────────────────
