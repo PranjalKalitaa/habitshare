@@ -32,7 +32,7 @@ No install needed! Open the app instantly in any browser:
 *   **⏰ Check-In Timer & Reminders**
     *   Interactive countdown timer below your streak ring.
     *   Automatic daily notifications to keep you on track before your streak expires.
-*   **💳 Stripe Payment Integration**
-    *   Fully integrated subscription flow (Monthly / Yearly) using Stripe Checkout.
+*   **💳 Razorpay Payment Integration**
+    *   Fully integrated subscription flow (Monthly / Yearly) using Razorpay Standard Checkout (pre-configured for Indian cards, UPI, wallets, and Netbanking).
 *   **📡 Firebase Database Backend**
-    *   Instant email-verification gateway and secure user accounts.
+    *   Instant email-verification and password reset gateway with secure user accounts.
