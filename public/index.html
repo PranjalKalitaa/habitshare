@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#15132B">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HabitShare">
+<meta name="description" content="Build a habit streak. Stay accountable. Share with friends.">
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/icon-192.svg">
+<title>HabitShare — Build Your Streak</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+
+<!-- Firebase SDK v10 (compat — works with our IIFE JS style, no bundler needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     LOADING OVERLAY
+     Shown while Firebase resolves the cached auth session.
+     Hides automatically in auth.js → onAuthStateChanged.
+     ═══════════════════════════════════════════════════════════ -->
+<div id="loading-overlay" class="loading-overlay">
+  <div class="loading-brand">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 2c1 4-3 5-3 9a3 3 0 006 0c0-1-.5-2-1-2.5.8 2 .3 3.5-1 3.5-1.5 0-2.5-1.2-2-3C11.5 7 12 5 12 2z" fill="#FBBF24"/>
+    </svg>
+  </div>
+  <div class="spinner"></div>
+</div>
+
+<div class="app">
+
+  <!-- ═══════════════════════════════════════════════════════════
+       AUTH SCREEN
+       Shown by auth.js when user is not signed in.
+       Hidden once onAuthStateChanged fires with a valid user.
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="screen-auth">
+
+    <!-- Hero -->
+    <div class="auth-hero">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 2c1 4-3 5-3 9a3 3 0 006 0c0-1-.5-2-1-2.5.8 2 .3 3.5-1 3.5-1.5 0-2.5-1.2-2-3C11.5 7 12 5 12 2z" fill="#FBBF24"/>
+          </svg>
+        </div>
+        <span class="brand-name">HabitShare</span>
+      </div>
+      <div class="auth-headline">One habit.<br>Every day.<br>Together.</div>
+      <div class="auth-sub">Build a streak. Stay accountable. Your friends will notice.</div>
+    </div>
+
+    <!-- Form card -->
+    <div class="auth-form-card">
+      <div class="auth-form-title" id="auth-form-title">Welcome back</div>
+
+      <!-- Google sign-in -->
+      <button class="btn-google" id="btn-google-signin">
+        <!-- Official Google "G" logo -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div class="auth-divider">or</div>
+
+      <!-- Name row (sign-up only, hidden by default) -->
+      <div id="auth-name-row" class="hidden">
+        <label class="field-label" for="auth-name">Your name</label>
+        <input type="text" id="auth-name" class="auth-input" placeholder="e.g. Rahul Sharma" autocomplete="name" maxlength="50">
+      </div>
+
+      <!-- Email -->
+      <label class="field-label" id="auth-email-label" for="auth-email">Email address</label>
+      <input type="email" id="auth-email" class="auth-input" placeholder="you@example.com" autocomplete="email" inputmode="email">
+
+      <!-- Password -->
+      <label class="field-label" for="auth-password">Password</label>
+      <input type="password" id="auth-password" class="auth-input" placeholder="••••••••" autocomplete="current-password">
+
+      <!-- Error message (hidden until needed) -->
+      <div id="auth-error" class="auth-error hidden"></div>
+
+      <!-- Submit button -->
+      <button class="btn-primary" id="btn-email-auth" style="margin-bottom:10px;">Sign in</button>
+
+      <!-- Toggle sign-in / create account -->
+      <button class="btn-toggle-mode" id="btn-toggle-mode">Don't have an account? Create one</button>
+    </div>
+
+    <p class="fine-print">By continuing, you agree to our Terms of Service and Privacy Policy.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       EMAIL VERIFICATION SCREEN
+       Shown when user is signed in but emailVerified is false.
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="screen-verification" class="hidden">
+    <div class="auth-hero">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 2c1 4-3 5-3 9a3 3 0 006 0c0-1-.5-2-1-2.5.8 2 .3 3.5-1 3.5-1.5 0-2.5-1.2-2-3C11.5 7 12 5 12 2z" fill="#FBBF24"/>
+          </svg>
+        </div>
+        <span class="brand-name">HabitShare</span>
+      </div>
+      <div class="auth-headline">Verify your email</div>
+      <p class="auth-sub" style="max-width:320px;">We've sent a verification link to <b id="verification-email-label">your email</b>. Please click the link in your email to verify your account.</p>
+    </div>
+
+    <div class="auth-form-card" style="text-align:center;">
+      <div id="verification-msg" class="auth-error hidden" style="background:#ECFDF5; border-color:#A7F3D0; color:#047857; margin-bottom:14px;"></div>
+      <div id="verification-error" class="auth-error hidden" style="margin-bottom:14px;"></div>
+
+      <button class="btn-primary" id="btn-verification-check" style="margin-bottom:12px;">I have verified my email</button>
+      <button class="btn-secondary" id="btn-verification-resend" style="width:100%; margin-bottom:12px; font-weight:600; padding:13px 14px; border:1.5px solid #ECEAF6; border-radius:var(--radius-md); background:var(--surface);">
+        Resend verification link
+      </button>
+      <button class="btn-toggle-mode" id="btn-verification-signout">Sign out / Use another account</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       TOP BAR
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="topbar" id="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2c1 4-3 5-3 9a3 3 0 006 0c0-1-.5-2-1-2.5.8 2 .3 3.5-1 3.5-1.5 0-2.5-1.2-2-3C11.5 7 12 5 12 2z" fill="#FBBF24"/></svg>
+      </div>
+      <span class="brand-name">HabitShare</span>
+    </div>
+    <button class="icon-btn hidden" id="btn-profile" aria-label="Open profile and settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c1.5-4 5-6 8-6s6.5 2 8 6"/></svg>
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ONBOARDING
+       Hidden by default; shown by app.js/auth.js after sign-in
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="screen-onboarding" class="hidden">
+    <div class="lede">Pick one tiny habit.<br>Show up for it daily.</div>
+    <div class="sub">HabitShare keeps it to a single habit at a time — small enough to actually finish, visible enough that your friends will notice.</div>
+
+    <div class="step-label"><span class="dot"></span>Choose your habit</div>
+    <div class="habit-grid" id="habit-grid"></div>
+    <input class="custom-habit-input" id="custom-habit" placeholder="Or type your own habit…" maxlength="40">
+
+    <label class="field-label" for="reminder-time">Daily reminder</label>
+    <input type="time" id="reminder-time" value="08:00">
+
+    <button class="btn-primary" id="btn-start" disabled>Start my streak</button>
+    <p class="fine-print">Free plan tracks 1 habit at a time. Upgrade anytime for more.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       DASHBOARD
+       ═══════════════════════════════════════════════════════════ -->
+  <div id="screen-dashboard" class="hidden">
+
+    <!-- Habit Tabs (premium multi-habit switcher) -->
+    <div class="habit-tabs hidden" id="habit-tabs"></div>
+
+    <div class="hero-card">
+      <div class="habit-name"><span id="hero-emo">💧</span><span id="hero-title">Drink Water</span></div>
+      <div class="ring-wrap">
+        <svg width="172" height="172" viewBox="0 0 172 172">
+          <circle cx="86" cy="86" r="76" stroke="#2A2557" stroke-width="12" fill="none"/>
+          <circle id="ring-progress" cx="86" cy="86" r="76" stroke="url(#ringGrad)" stroke-width="12" fill="none"
+            stroke-linecap="round" stroke-dasharray="477.5" stroke-dashoffset="477.5" style="transition:stroke-dashoffset .8s cubic-bezier(.4,0,.2,1);"/>
+          <defs>
+            <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#FBBF24"/>
+              <stop offset="100%" stop-color="#8B5CF6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="ring-center">
+          <div class="streak-num" id="streak-num">0</div>
+          <div class="streak-label">DAY STREAK</div>
+        </div>
+      </div>
+      <div class="milestone-hint" id="milestone-hint"></div>
+      <!-- Countdown timer -->
+      <div class="streak-timer" id="streak-timer"></div>
+    </div>
+
+    <div class="card checkin-card" id="checkin-card"></div>
+
+    <div class="card">
+      <div class="cal-head">
+        <div class="cal-title">Last 30 days</div>
+        <div class="cal-legend" id="cal-legend"></div>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
+    </div>
+
+    <div class="card">
+      <div class="cal-head"><div class="cal-title">Milestones</div></div>
+      <div class="badge-row" id="badge-row"></div>
+    </div>
+
+    <div class="footer-actions">
+      <button class="btn-share" id="btn-open-share">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#3B2600" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg>
+        Share achievement
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SHARE SHEET
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="overlay" id="overlay-share">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title">Share your streak</div>
+        <button class="sheet-close" id="close-share" aria-label="Close">✕</button>
+      </div>
+      <div class="share-canvas-wrap">
+        <canvas id="share-canvas" width="600" height="315"></canvas>
+      </div>
+      <div class="share-row">
+        <button class="btn-secondary" id="btn-download-card">Download image</button>
+        <button class="btn-primary" id="btn-copy-linkA">Copy caption</button>
+      </div>
+      <label class="field-label">Your invite link — friends who join both get a bonus</label>
+      <div class="invite-box">
+        <span class="invite-code" id="invite-code-share">—</span>
+        <button class="copy-btn" id="copy-invite-share">Copy link</button>
+      </div>
+      <p class="fine-print">Posting is manual for now — save the image or copy the caption into Instagram, X, or wherever your friends will actually see it.</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       ADD HABIT OVERLAY (premium)
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="overlay" id="overlay-add-habit">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title">Add a habit ✨</div>
+        <button class="sheet-close" id="close-add-habit" aria-label="Close">✕</button>
+      </div>
+      <p style="font-size:13.5px;color:var(--ink-soft);margin-bottom:16px;">Choose a second habit to track alongside your first.</p>
+      <div class="step-label"><span class="dot"></span>Choose your habit</div>
+      <div class="habit-grid" id="habit-grid-add"></div>
+      <input class="custom-habit-input" id="custom-habit-add" placeholder="Or type your own habit…" maxlength="40">
+      <label class="field-label" for="reminder-time-add">Daily reminder</label>
+      <input type="time" id="reminder-time-add" value="08:00">
+      <button class="btn-primary" id="btn-add-habit" disabled>Add to my habits</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       PROFILE SHEET
+       ═══════════════════════════════════════════════════════════ -->
+  <div class="overlay" id="overlay-profile">
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title">Your profile</div>
+        <button class="sheet-close" id="close-profile" aria-label="Close">✕</button>
+      </div>
+
+      <!-- Premium: Avatar + display name -->
+      <div class="profile-avatar-section hidden" id="profile-avatar-section">
+        <div class="avatar-wrap">
+          <div class="avatar-circle" id="avatar-circle">
+            <span id="avatar-initials">?</span>
+            <img id="avatar-img" class="hidden" alt="Profile">
+          </div>
+          <button class="avatar-upload-btn" id="avatar-upload-btn">Change photo</button>
+          <input type="file" id="avatar-file-input" accept="image/*" class="hidden">
+        </div>
+        <div class="display-name-wrap">
+          <label class="field-label" for="display-name-input">Display name</label>
+          <input type="text" id="display-name-input" class="auth-input" placeholder="Your name" maxlength="30" autocomplete="nickname">
+          <button class="btn-primary" id="save-display-name" style="padding:11px;font-size:13px;margin-top:6px;">Save name</button>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-box"><div class="sv" id="stat-streak">0</div><div class="sl">Current streak</div></div>
+        <div class="stat-box"><div class="sv" id="stat-best">0</div><div class="sl">Best streak</div></div>
+        <div class="stat-box"><div class="sv" id="stat-total">0</div><div class="sl">Total check-ins</div></div>
+        <div class="stat-box"><div class="sv" id="stat-points">0</div><div class="sl">Points earned</div></div>
+      </div>
+
+      <label class="field-label">Your invite code</label>
+      <div class="invite-box">
+        <span class="invite-code" id="invite-code-profile">—</span>
+        <button class="copy-btn" id="copy-invite-profile">Copy</button>
+      </div>
+
+      <label class="field-label" for="reminder-time-2">Daily reminder time</label>
+      <input type="time" id="reminder-time-2">
+
+      <!-- Upgrade card — Stripe wired in Phase 2 -->
+      <div class="upgrade-card">
+        <div class="ut">🔓 HabitShare Premium</div>
+        <div class="us">Track multiple habits, unlock full history &amp; export, and get priority support.</div>
+        <div style="display:flex; gap:8px; margin-bottom:10px;">
+          <button class="btn-primary" id="btn-upgrade-monthly" style="box-shadow:none; font-size:13px; padding:12px 10px;">
+            ₹89 / month
+          </button>
+          <button class="btn-primary" id="btn-upgrade-yearly" style="box-shadow:none; font-size:13px; padding:12px 10px; background:linear-gradient(135deg,var(--amber),var(--amber-deep)); color:#3B2600;">
+            ₹1,001 / year 🔥
+          </button>
+        </div>
+        <div class="fine-print" style="margin-top:0; text-align:left;">Yearly saves you ₹67 vs monthly. Payments via Stripe — secure &amp; instant.</div>
+      </div>
+
+      <div class="profile-row">
+        <span class="pl">Habit</span>
+        <span class="pv" id="profile-habit-name">—</span>
+      </div>
+      <div class="profile-row">
+        <span class="pl">Started</span>
+        <span class="pv" id="profile-start-date">—</span>
+      </div>
+      <div class="profile-row">
+        <span class="pl">Account</span>
+        <span class="pv" id="profile-email" style="font-size:12px; word-break:break-all;">—</span>
+      </div>
+
+      <button class="btn-ghost" id="btn-reset" style="margin-top:8px;">Reset habit &amp; start over</button>
+      <button class="btn-signout" id="btn-signout">Sign out of HabitShare</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div><!-- /.app -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     SCRIPTS — order matters:
+     1. firebase-init.js  → initializes firebase, sets window.db + window.fbAuth
+     2. auth.js           → sets up auth state listener, controls screen visibility
+     3. app.js            → main app logic, exposes window.initApp
+     ═══════════════════════════════════════════════════════════ -->
+<script src="js/firebase-init.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/app.js"></script>
+
+<!-- PWA Service Worker Registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('[SW] Registered:', reg.scope))
+        .catch(err => console.warn('[SW] Registration failed:', err));
+    });
+  }
+</script>
+</body>
+</html>
