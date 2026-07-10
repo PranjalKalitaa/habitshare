@@ -423,14 +423,18 @@
     grid.innerHTML = '';
     const set      = new Set(activeCompletions());
     let doneCount  = 0;
+    const habit     = activeHabit();
+    const startDate = (habit && habit.startDate) ? habit.startDate : todayStr();
     for(let i=29; i>=0; i--){
       const d    = daysAgoStr(i);
       const cell = document.createElement('div');
       const done = set.has(d);
       if(done) doneCount++;
-      cell.className   = 'cal-cell' + (done?' done': (i>0?' missed':'')) + (i===0?' today':'');
+      const isAfterStart = d >= startDate;
+      const isMissed     = !done && i > 0 && isAfterStart;
+      cell.className   = 'cal-cell' + (done?' done': (isMissed?' missed':'')) + (i===0?' today':'');
       cell.title       = d;
-      cell.textContent = done ? '✓' : (i>0?'✗':'');
+      cell.textContent = done ? '✓' : (isMissed?'✗':'');
       grid.appendChild(cell);
     }
     $('cal-legend').textContent = `${doneCount}/30 days`;
