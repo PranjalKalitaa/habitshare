@@ -1,7 +1,7 @@
 // sw.js — HabitShare Service Worker
 // Provides offline support and PWA installability
 
-const CACHE_NAME = 'habitshare-v1';
+const CACHE_NAME = 'habitshare-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -34,9 +34,9 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch: serve from cache first, then network (cache-first strategy)
+// Fetch: serve from network first, then fall back to cache if offline (network-first strategy)
 self.addEventListener('fetch', (event) => {
-  // Don't intercept API/server calls — let them go to network always
+  // Don't intercept API/server/external calls — let them go to network always
   if (
     event.request.url.includes('localhost:4000') ||
     event.request.url.includes('onrender.com') ||
@@ -48,9 +48,8 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request).then((response) => {
+    fetch(event.request)
+      .then((response) => {
         // Cache successful GET responses
         if (
           response &&
@@ -61,7 +60,10 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         }
         return response;
-      });
-    })
+      })
+      .catch(() => {
+        // Offline fallback
+        return caches.match(event.request);
+      })
   );
 });
