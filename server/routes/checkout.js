@@ -31,6 +31,17 @@ router.post('/session', async (req, res) => {
   }
 
   try {
+    // Dynamically detect frontend URL from Referer header, falling back to FRONTEND_URL
+    let frontendUrl = process.env.FRONTEND_URL || 'https://habit-share-app.web.app';
+    if (req.headers.referer) {
+      try {
+        const parsedUrl = new URL(req.headers.referer);
+        frontendUrl = parsedUrl.origin;
+      } catch (e) {
+        // Fallback if parsing fails
+      }
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',           // recurring billing
       payment_method_types: ['card'],
@@ -53,8 +64,8 @@ router.post('/session', async (req, res) => {
       },
 
       // Where Stripe redirects after checkout
-      success_url: `${process.env.FRONTEND_URL}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url:  `${process.env.FRONTEND_URL}?payment=cancel`,
+      success_url: `${frontendUrl}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url:  `${frontendUrl}?payment=cancel`,
     });
 
     console.log(`[HabitShare] ✅ Checkout session created for uid=${uid} plan=${priceType}`);
