@@ -24,8 +24,10 @@
   const inputEmail      = $id('auth-email');
   const inputPwd        = $id('auth-password');
   const authError       = $id('auth-error');
+  const authSuccess     = $id('auth-success');
   const authFormTitle   = $id('auth-form-title');
   const nameRow         = $id('auth-name-row');
+  const btnForgotPwd    = $id('btn-forgot-password');
 
   let isSignUpMode = false;
 
@@ -35,10 +37,20 @@
     authError.classList.remove('hidden');
   }
 
-  function clearAuthError() {
+  function showAuthSuccess(msg) {
+    authSuccess.textContent = msg;
+    authSuccess.classList.remove('hidden');
+  }
+
+  function clearAuthMessages() {
     authError.classList.add('hidden');
     authError.textContent = '';
+    authSuccess.classList.add('hidden');
+    authSuccess.textContent = '';
   }
+
+  // Keep backward compat alias
+  function clearAuthError() { clearAuthMessages(); }
 
   // Maps Firebase error codes → human-friendly messages
   function friendlyError(code) {
@@ -137,10 +149,42 @@
     });
   });
 
+  // ─── Forgot Password ──────────────────────────────────────
+  btnForgotPwd.addEventListener('click', async () => {
+    clearAuthMessages();
+    const email = inputEmail.value.trim();
+    if (!email) {
+      showAuthError('Please enter your email address first, then tap "Forgot password?"');
+      return;
+    }
+    btnForgotPwd.disabled = true;
+    btnForgotPwd.textContent = 'Sending…';
+    try {
+      await auth.sendPasswordResetEmail(email);
+      showAuthSuccess('Password reset link sent! Check your inbox (and spam folder).');
+      // Cooldown
+      let seconds = 30;
+      const iv = setInterval(() => {
+        seconds--;
+        if (seconds <= 0) {
+          clearInterval(iv);
+          btnForgotPwd.textContent = 'Forgot password?';
+          btnForgotPwd.disabled = false;
+        } else {
+          btnForgotPwd.textContent = `Resend in ${seconds}s`;
+        }
+      }, 1000);
+    } catch (e) {
+      btnForgotPwd.textContent = 'Forgot password?';
+      btnForgotPwd.disabled = false;
+      showAuthError(friendlyError(e.code));
+    }
+  });
+
   // ─── Toggle Sign-In ↔ Create Account ──────────────────────
   btnToggle.addEventListener('click', () => {
     isSignUpMode = !isSignUpMode;
-    clearAuthError();
+    clearAuthMessages();
     inputEmail.value = '';
     inputPwd.value   = '';
     inputName.value  = '';
@@ -148,12 +192,14 @@
     if (isSignUpMode) {
       authFormTitle.textContent = 'Create your account';
       nameRow.classList.remove('hidden');
+      btnForgotPwd.classList.add('hidden');
       inputPwd.setAttribute('autocomplete', 'new-password');
       btnEmailAuth.textContent  = 'Create account';
       btnToggle.textContent     = 'Already have an account? Sign in';
     } else {
       authFormTitle.textContent = 'Welcome back';
       nameRow.classList.add('hidden');
+      btnForgotPwd.classList.remove('hidden');
       inputPwd.setAttribute('autocomplete', 'current-password');
       btnEmailAuth.textContent  = 'Sign in';
       btnToggle.textContent     = "Don't have an account? Create one";

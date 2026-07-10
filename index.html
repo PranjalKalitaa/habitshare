@@ -96,8 +96,13 @@
       <label class="field-label" for="auth-password">Password</label>
       <input type="password" id="auth-password" class="auth-input" placeholder="••••••••" autocomplete="current-password">
 
+      <!-- Forgot password link (sign-in mode only) -->
+      <button type="button" class="btn-forgot-password" id="btn-forgot-password">Forgot password?</button>
+
       <!-- Error message (hidden until needed) -->
       <div id="auth-error" class="auth-error hidden"></div>
+      <!-- Success message (for reset email sent) -->
+      <div id="auth-success" class="auth-success hidden"></div>
 
       <!-- Submit button -->
       <button class="btn-primary" id="btn-email-auth" style="margin-bottom:10px;">Sign in</button>

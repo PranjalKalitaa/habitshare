@@ -438,6 +438,24 @@
     font-size:13px; color:#B91C1C; font-weight:500; line-height:1.4;
   }
 
+  /* Success */
+  .auth-success{
+    background:#F0FDF4; border:1.5px solid #86EFAC;
+    border-radius:var(--radius-sm);
+    padding:10px 13px; margin-bottom:12px;
+    font-size:13px; color:#15803D; font-weight:500; line-height:1.4;
+  }
+
+  /* Forgot password link */
+  .btn-forgot-password{
+    background:none; border:none; padding:0; margin:0 0 12px 0;
+    font-size:13px; font-weight:600; color:var(--indigo);
+    cursor:pointer; text-align:right; display:block; width:100%;
+    font-family:inherit;
+    transition:color .15s ease;
+  }
+  .btn-forgot-password:hover{ color:var(--indigo-deep); text-decoration:underline; }
+
   /* Toggle link */
   .btn-toggle-mode{
     width:100%; text-align:center; background:none; border:none;
