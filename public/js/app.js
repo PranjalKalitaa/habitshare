@@ -203,9 +203,24 @@
     if(trigger <= new Date()) trigger.setDate(trigger.getDate() + 1);
     setTimeout(async () => {
       if(Notification.permission === 'granted' && !activeCompletions().includes(todayStr())){
-        new Notification('HabitShare 🔥 Streak reminder!', {
-          body: `Don't forget to ${habit.title.toLowerCase()} today — keep your streak alive!`,
-          icon: '/favicon.ico',
+        let msg = `Don't forget to show up for your habit today!`;
+        const title = habit.title.toLowerCase();
+        if (title.includes('water') || title.includes('drink')) {
+          msg = `💧 Time for a hydration check! Did you drink water today?`;
+        } else if (title.includes('read') || title.includes('book')) {
+          msg = `📖 Ready for some quiet time? Did you read your pages today?`;
+        } else if (title.includes('exercise') || title.includes('gym') || title.includes('workout') || title.includes('run')) {
+          msg = `💪 Keep up the energy! Did you complete your exercise today?`;
+        } else if (title.includes('meditate') || title.includes('breathe') || title.includes('mindful')) {
+          msg = `🧘 Take a deep breath. Did you meditate today?`;
+        } else if (title.includes('code') || title.includes('program') || title.includes('study') || title.includes('learn')) {
+          msg = `💻 Push some commits! Did you study/code today?`;
+        } else {
+          msg = `🔥 Ready to check in? Did you complete "${habit.title}" today?`;
+        }
+        new Notification('HabitShare ⏰ Reminder', {
+          body: msg,
+          icon: 'icons/logo-192.png',
         });
       }
       scheduleReminderNotification(); // reschedule for next day
@@ -386,6 +401,14 @@
           state.points += 10;
           const s = computeStreak(activeCompletions());
           if(s > state.bestStreak) state.bestStreak = s;
+          
+          // Trigger celebration notification
+          if(Notification.permission === 'granted'){
+            new Notification('HabitShare 🎉 Goal Met!', {
+              body: `Awesome! You completed your task today. Your streak is now ${s} days!`,
+              icon: 'icons/logo-192.png',
+            });
+          }
         }
         await saveState();
         renderDashboard();
@@ -405,9 +428,9 @@
       const cell = document.createElement('div');
       const done = set.has(d);
       if(done) doneCount++;
-      cell.className   = 'cal-cell' + (done?' done':'') + (i===0?' today':'');
+      cell.className   = 'cal-cell' + (done?' done': (i>0?' missed':'')) + (i===0?' today':'');
       cell.title       = d;
-      cell.textContent = done ? '✓' : '';
+      cell.textContent = done ? '✓' : (i>0?'✗':'');
       grid.appendChild(cell);
     }
     $('cal-legend').textContent = `${doneCount}/30 days`;

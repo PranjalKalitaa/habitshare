@@ -214,6 +214,7 @@
   }
   .cal-cell.done{ background:linear-gradient(135deg, var(--indigo), var(--indigo-deep)); color:#fff; }
   .cal-cell.today{ box-shadow:0 0 0 2px var(--amber); }
+  .cal-cell.missed{ background:rgba(239,68,68,0.12); color:#EF4444; border:1px solid rgba(239,68,68,0.2); }
 
   /* ---------- Badges ---------- */
   .badge-row{display:flex; gap:10px; overflow-x:auto; padding-bottom:2px;}
@@ -310,30 +311,41 @@
   /* ---------- Loading overlay ---------- */
   .loading-overlay{
     position:fixed; inset:0; background:var(--bg);
-    display:flex; align-items:center; justify-content:center;
-    flex-direction:column; gap:20px; z-index:300;
+    display:flex; align-items:center; justify-content:flex-start;
+    flex-direction:column; z-index:300; overflow-y:auto;
     transition:opacity .3s ease;
   }
-  .loading-brand{
-    width:48px; height:48px; border-radius:14px;
-    background:linear-gradient(135deg,var(--indigo) 0%,var(--indigo-deep) 100%);
-    display:flex; align-items:center; justify-content:center;
-    box-shadow:0 8px 20px -8px rgba(67,56,202,0.6);
-    animation: pulse-brand 1.8s ease-in-out infinite;
+  
+  /* Skeleton Loading Styles */
+  .sk-topbar {
+    width: 100%; max-width: 420px; display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 22px; position: absolute; top: 0; box-sizing: border-box;
   }
-  .loading-brand svg{ width:26px; height:26px; }
-  @keyframes pulse-brand{
-    0%,100%{ transform:scale(1); box-shadow:0 8px 20px -8px rgba(67,56,202,0.6); }
-    50%    { transform:scale(1.07); box-shadow:0 12px 28px -8px rgba(67,56,202,0.85); }
+  .sk-brand { display: flex; align-items: center; gap: 9px; }
+  .sk-logo { width: 30px; height: 30px; border-radius: 9px; background: var(--surface-sunken); overflow: hidden; }
+  .sk-avatar { width: 38px; height: 38px; border-radius: 50%; background: var(--surface-sunken); animation: sk-shimmer 1.5s infinite ease-in-out; }
+  .sk-body {
+    width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 16px;
+    padding: 80px 22px 22px; margin-top: 10px; box-sizing: border-box;
   }
-  .spinner{
-    width:28px; height:28px;
-    border:3px solid #ECEAF6;
-    border-top-color:var(--indigo);
-    border-radius:50%;
-    animation:spin .75s linear infinite;
+  .sk-card {
+    background: var(--surface); border-radius: var(--radius-lg); padding: 22px;
+    box-shadow: var(--shadow-card); box-sizing: border-box;
   }
-  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .sk-text {
+    height: 14px; background: var(--surface-sunken); border-radius: 4px;
+    animation: sk-shimmer 1.5s infinite ease-in-out;
+  }
+  .sk-circle {
+    width: 120px; height: 120px; border-radius: 50%; background: var(--surface-sunken);
+    animation: sk-shimmer 1.5s infinite ease-in-out;
+  }
+  .sk-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; }
+  .sk-cell { aspect-ratio: 1; border-radius: 6px; background: var(--surface-sunken); animation: sk-shimmer 1.5s infinite ease-in-out; }
+  @keyframes sk-shimmer {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.35; }
+  }
 
   /* ---------- Auth screen ---------- */
   #screen-auth{

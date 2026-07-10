@@ -23,7 +23,7 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.habitshare.app"
-    android:versionCode="2"
+    android:versionCode="3"
     android:versionName="1.0.0" >
 
     <uses-sdk

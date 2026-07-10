@@ -20,7 +20,7 @@
     "alias": "habitshare"
   },
   "appVersionName": "1.0.0",
-  "appVersionCode": 2,
+  "appVersionCode": 3,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "http://localhost:3000/manifest.json",
