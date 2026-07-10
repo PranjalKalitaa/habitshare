@@ -21,13 +21,11 @@ const webhookRouter  = require('./routes/webhook');
 const app  = express();
 const PORT = process.env.PORT || 4000;
 
-// ── Allowed frontend origins ─────────────────────────────────
-const ALLOWED_ORIGINS = [
-  'http://localhost:3000',
-  'http://127.0.0.1:3000',
-  'http://localhost:5500',   // VS Code Live Server
-  'http://127.0.0.1:5500',
-];
+// ── CORS: allow all origins ──────────────────────────────────
+// Security is enforced by Firebase Auth tokens (on checkout)
+// and Stripe webhook signatures — not by origin headers.
+// This allows localtunnel, Firebase Hosting, and any future domains.
+app.use(cors({ origin: true, credentials: true }));
 
 // ── IMPORTANT: Webhook route MUST receive the raw body ────────
 // Stripe uses the raw bytes to verify the signature.
@@ -37,16 +35,6 @@ app.use(
   express.raw({ type: 'application/json' }),
   webhookRouter
 );
-
-// ── Standard middleware for all other routes ─────────────────
-app.use(cors({
-  origin: (origin, cb) => {
-    // Allow requests with no origin (e.g. curl, Postman, same-origin)
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    cb(new Error(`CORS: origin ${origin} not allowed`));
-  },
-  credentials: true,
-}));
 app.use(express.json());
 
 // ── Routes ───────────────────────────────────────────────────
