@@ -54,8 +54,9 @@ router.post('/razorpay-order', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('[HabitShare] ❌ Razorpay Order creation failed:', err.message);
-    res.status(500).json({ error: err.message || 'Razorpay order creation failed' });
+    console.error('[HabitShare] ❌ Razorpay Order creation failed:', err);
+    const errMsg = err.error?.description || err.message || 'Razorpay order creation failed';
+    res.status(500).json({ error: errMsg });
   }
 });
 

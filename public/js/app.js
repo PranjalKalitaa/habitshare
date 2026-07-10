@@ -579,7 +579,7 @@
           <div style="font-size:30px;flex-shrink:0">✨</div>
           <div>
             <div class="ut" style="color:var(--amber-deep);">Premium Active — Yearly</div>
-            <div class="us" style="margin-bottom:0;">US$10.49/year · Thank you for supporting HabitShare!</div>
+            <div class="us" style="margin-bottom:0;">₹1,001/year · Thank you for supporting HabitShare!</div>
           </div>
         </div>`;
       card.style.background = 'linear-gradient(135deg,#FFF8E1,#FFF3CD)';
@@ -591,12 +591,12 @@
           <div style="font-size:26px">✨</div>
           <div>
             <div class="ut" style="color:var(--indigo-deep);">Premium Active — Monthly</div>
-            <div class="us">US$1.00/month active. Upgrade to Yearly and save even more!</div>
+            <div class="us">₹89/month active. Upgrade to Yearly and save even more!</div>
           </div>
         </div>
         <button class="btn-primary" id="btn-upgrade-yearly-cta"
           style="box-shadow:none;font-size:13px;padding:12px;background:linear-gradient(135deg,var(--amber),var(--amber-deep));color:#3B2600;">
-          Switch to Yearly · US$10.49 🔥 Best value
+          Switch to Yearly · ₹1,001 🔥 Best value
         </button>`;
       card.style.background = 'linear-gradient(135deg,#EEE9FF,#E0E7FF)';
       card.style.border     = '1.5px solid var(--indigo)';
@@ -609,14 +609,14 @@
         <div style="display:flex;gap:8px;margin-bottom:10px;">
           <button class="btn-primary" id="btn-upgrade-monthly"
             style="box-shadow:none;font-size:13px;padding:12px 10px;">
-            US$1.00&nbsp;/&nbsp;month
+            ₹89&nbsp;/&nbsp;month
           </button>
           <button class="btn-primary" id="btn-upgrade-yearly"
             style="box-shadow:none;font-size:13px;padding:12px 10px;background:linear-gradient(135deg,var(--amber),var(--amber-deep));color:#3B2600;">
-            US$10.49&nbsp;/&nbsp;year 🔥
+            ₹1,001&nbsp;/&nbsp;year 🔥
           </button>
         </div>
-        <div class="fine-print" style="margin-top:0;text-align:left;">Secure payment via Stripe.</div>`;
+        <div class="fine-print" style="margin-top:0;text-align:left;">Secure payment via Razorpay.</div>`;
       $('btn-upgrade-monthly')?.addEventListener('click', () => redirectToCheckout('monthly'));
       $('btn-upgrade-yearly')?.addEventListener('click',  () => redirectToCheckout('yearly'));
     }
