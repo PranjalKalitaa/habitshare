@@ -1,17 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background -->
-  <rect width="512" height="512" rx="102.4" fill="#15132B"/>
-  <!-- Flame shape -->
-  <g transform="translate(256, 256)">
-    <path
-      d="M0 -153.6 C25.6 -76.8 -76.8 -40.96 -61.44 20.48 C-61.44 61.44 -102.4 81.92 -61.44 112.64 A87.04 87.04 0 0 0 61.44 112.64 C102.4 81.92 61.44 61.44 61.44 20.48 C76.8 -40.96 -25.6 -76.8 0 -153.6Z"
-      fill="#FBBF24"
-    />
-    <!-- Inner flame -->
-    <path
-      d="M0 -61.44 C10.24 -20.48 -30.72 0 -20.48 40.96 C-20.48 71.68 20.48 81.92 20.48 40.96 C30.72 0 -10.24 -20.48 0 -61.44Z"
-      fill="#FDE68A" opacity="0.8"
-    />
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="102" fill="#15132B"/>
+  <image href="habitshare_logo.png" x="0" y="0" height="512" width="512" />
 </svg>
