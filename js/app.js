@@ -194,6 +194,87 @@
     return (await Notification.requestPermission()) === 'granted';
   }
 
+  let periodicNotificationInterval = null;
+
+  function startPeriodicReminders() {
+    if (periodicNotificationInterval) clearInterval(periodicNotificationInterval);
+    
+    // Check every 30 minutes (1800000 ms)
+    periodicNotificationInterval = setInterval(() => {
+      triggerPeriodicReminder();
+    }, 1800000);
+  }
+
+  function triggerPeriodicReminder() {
+    const habit = activeHabit();
+    if (!habit || !habit.title) return;
+    
+    // If already done today, don't nudge them!
+    if (activeCompletions().includes(todayStr())) return;
+    
+    if (Notification.permission === 'granted') {
+      const title = habit.title.toLowerCase();
+      let list = [];
+      let prefix = '⏰ Reminder';
+      
+      if (title.includes('water') || title.includes('drink')) {
+        prefix = '💧 Hydration';
+        list = [
+          "Did you drink today?",
+          "Don't forget to drink water!",
+          "Water is good for your health!",
+          "Your organs need water!",
+          "Stay hydrated, stay fresh!",
+          "Time for a quick glass of water!",
+          "Keep that hydration streak going!"
+        ];
+      } else if (title.includes('exercise') || title.includes('gym') || title.includes('workout') || title.includes('run')) {
+        prefix = '💪 Stay Active';
+        list = [
+          "Time to move! Did you exercise today?",
+          "Exercise boosts your mood, let's get it done!",
+          "A short workout is better than no workout!",
+          "Stay active, keep healthy!",
+          "Your future self will thank you for exercising!"
+        ];
+      } else if (title.includes('read') || title.includes('book')) {
+        prefix = '📖 Reading Time';
+        list = [
+          "Time to read! Have you opened your book today?",
+          "Feed your mind. Don't forget to read today!",
+          "Just 10 minutes of reading makes a difference!",
+          "Keep learning and growing today!"
+        ];
+      } else if (title.includes('meditate') || title.includes('breathe') || title.includes('mindful')) {
+        prefix = '🧘 Mindfulness';
+        list = [
+          "Take a deep breath. Have you meditated today?",
+          "Clear your mind for a few moments.",
+          "Balance and focus. Time to meditate.",
+          "Relax and center yourself."
+        ];
+      } else {
+        prefix = '🔥 Habit Tracker';
+        list = [
+          `Don't forget your habit "${habit.title}" today!`,
+          "Consistency is the key to building habits!",
+          "Small daily wins build massive results!",
+          "Keep your streak alive today!"
+        ];
+      }
+      
+      const randomMsg = list[Math.floor(Math.random() * list.length)];
+      
+      new Notification(`HabitShare ${prefix}`, {
+        body: randomMsg,
+        icon: 'icons/logo-192.png',
+      });
+    }
+  }
+
+  // Expose test helper to window
+  window.triggerNudgeNotification = triggerPeriodicReminder;
+
   function scheduleReminderNotification(){
     const habit = activeHabit();
     if(!habit || !habit.title) return;
@@ -229,7 +310,10 @@
 
   async function setupNotifications(){
     const granted = await requestNotificationPermission();
-    if(granted) scheduleReminderNotification();
+    if(granted) {
+      scheduleReminderNotification();
+      startPeriodicReminders();
+    }
   }
 
   // ── Habit grid builder (reusable) ────────────────────────────
