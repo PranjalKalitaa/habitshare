@@ -1,0 +1,10 @@
+# Ignore local environment config
+server/.env
+
+# Ignore node modules
+node_modules/
+server/node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
