@@ -36,6 +36,10 @@
     justify-content:center;
     padding:28px 14px 60px;
     -webkit-font-smoothing:antialiased;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
   }
   .app{
     width:100%;
