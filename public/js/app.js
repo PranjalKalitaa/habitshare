@@ -275,37 +275,105 @@
   // Expose test helper to window
   window.triggerNudgeNotification = triggerPeriodicReminder;
 
+  let scheduledTimeouts = [];
+
   function scheduleReminderNotification(){
+    // Clear any existing timeouts to avoid duplicates
+    scheduledTimeouts.forEach(t => clearTimeout(t));
+    scheduledTimeouts = [];
+
     const habit = activeHabit();
     if(!habit || !habit.title) return;
-    const [rh, rm] = (habit.reminderTime || '08:00').split(':').map(Number);
-    const trigger  = new Date();
+
+    // 5 daily reminder slots
+    const reminderSlots = ['09:00', '12:00', '15:00', '18:00', '21:00'];
+
+    reminderSlots.forEach(timeStr => {
+      scheduleSlot(timeStr);
+    });
+  }
+
+  function scheduleSlot(timeStr) {
+    const habit = activeHabit();
+    if (!habit || !habit.title) return;
+
+    const [rh, rm] = timeStr.split(':').map(Number);
+    const trigger = new Date();
     trigger.setHours(rh, rm, 0, 0);
-    if(trigger <= new Date()) trigger.setDate(trigger.getDate() + 1);
-    setTimeout(async () => {
-      if(Notification.permission === 'granted' && !activeCompletions().includes(todayStr())){
-        let msg = `Don't forget to show up for your habit today!`;
+
+    // If this time has already passed today, schedule it for tomorrow
+    if (trigger <= new Date()) {
+      trigger.setDate(trigger.getDate() + 1);
+    }
+
+    const timeoutDelay = trigger - Date.now();
+
+    const tId = setTimeout(async () => {
+      // Check if not completed today yet
+      if (Notification.permission === 'granted' && !activeCompletions().includes(todayStr())) {
         const title = habit.title.toLowerCase();
+        let list = [];
+        let prefix = '⏰ Reminder';
+
         if (title.includes('water') || title.includes('drink')) {
-          msg = `💧 Time for a hydration check! Did you drink water today?`;
-        } else if (title.includes('read') || title.includes('book')) {
-          msg = `📖 Ready for some quiet time? Did you read your pages today?`;
-        } else if (title.includes('exercise') || title.includes('gym') || title.includes('workout') || title.includes('run')) {
-          msg = `💪 Keep up the energy! Did you complete your exercise today?`;
+          prefix = '💧 Hydration Check';
+          list = [
+            "Your organs need water! Take a quick sip now.",
+            "Water is good for your health! Have you had a glass recently?",
+            "Did you drink today? Keep that hydration streak going!",
+            "Don't forget to drink water! Keep your body feeling fresh.",
+            "Keep drinking water, stay focused and energized today!"
+          ];
         } else if (title.includes('meditate') || title.includes('breathe') || title.includes('mindful')) {
-          msg = `🧘 Take a deep breath. Did you meditate today?`;
-        } else if (title.includes('code') || title.includes('program') || title.includes('study') || title.includes('learn')) {
-          msg = `💻 Push some commits! Did you study/code today?`;
+          prefix = '🧘 Mindfulness';
+          list = [
+            "Keep meditating! It helps you relax and take the right decisions.",
+            "Take a deep breath. Clear your mind for a few moments.",
+            "Balance and focus. Have you completed your meditation today?",
+            "A quiet mind is a powerful mind. Take time to meditate.",
+            "Relax and center yourself. Did you take your mindful break?"
+          ];
+        } else if (title.includes('exercise') || title.includes('gym') || title.includes('workout') || title.includes('run')) {
+          prefix = '💪 Keep Active';
+          list = [
+            "Keep moving! Active body, active mind. Did you exercise today?",
+            "A short workout builds long-term strength. You've got this!",
+            "Stay strong! Keep your fitness streak alive today.",
+            "Your future self will thank you for getting active today.",
+            "Exercise boosts your mood, let's get it done!"
+          ];
+        } else if (title.includes('read') || title.includes('book')) {
+          prefix = '📖 Mind Food';
+          list = [
+            "Have you read your pages today? Keep learning and growing.",
+            "Feed your mind. Don't forget to read today!",
+            "Just 10 minutes of reading expands your horizon. Try it now.",
+            "Keep reading, keep learning, keep growing!"
+          ];
         } else {
-          msg = `🔥 Ready to check in? Did you complete "${habit.title}" today?`;
+          prefix = '🔥 Habit Streak';
+          list = [
+            `Don't let your streak slip away! Complete "${habit.title}" today.`,
+            "Consistency is key. Track your habit to keep moving forward.",
+            "A small action today builds a lifetime habit. Let's do it!",
+            "Small daily wins build massive results. Keep it up!",
+            `Time for your check-in: did you do "${habit.title}" today?`
+          ];
         }
-        new Notification('HabitShare ⏰ Reminder', {
-          body: msg,
+
+        const randomMsg = list[Math.floor(Math.random() * list.length)];
+
+        new Notification(`HabitShare ${prefix}`, {
+          body: randomMsg,
           icon: 'icons/logo-192.png',
         });
       }
-      scheduleReminderNotification(); // reschedule for next day
-    }, trigger - Date.now());
+
+      // Reschedule this slot for the next day
+      scheduleSlot(timeStr);
+    }, timeoutDelay);
+
+    scheduledTimeouts.push(tId);
   }
 
   async function setupNotifications(){
